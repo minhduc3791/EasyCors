@@ -24,16 +24,23 @@ namespace CorsAnywhere.Controllers
             _makeAPICallService = makeAPICallService;
         }
 
-        [HttpGet]
+        /*[HttpGet]
         public Task<ResponseWrapper> Get([FromBody] PostObject postData)
         {
             return _makeAPICallService.MakeGetAPICall(postData);
-        }
+        }*/
 
         [HttpPost]
         public Task<ResponseWrapper> Post([FromBody] PostObject postData)
         {
-            return _makeAPICallService.MakePostAPICall(postData);
+            if (postData.Method.Equals("POST"))
+            {
+                return _makeAPICallService.MakePostAPICall(postData);
+            }
+            else
+            {
+                return _makeAPICallService.MakeGetAPICall(postData);
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace CorsAnywhere.Services
 {
@@ -36,16 +37,12 @@ namespace CorsAnywhere.Services
 
             try
             {
-                if (postData.HeadersList != null)
-                {
-                    var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(postData.HeadersList);
-                    foreach (KeyValuePair<string, string> entry in headers)
-                    {
-                        _client.DefaultRequestHeaders.Add(entry.Key, entry.Value);
-                    }
-                }
+                SetHeader(postData.HeadersList);
+                var builder = new UriBuilder(postData.RequestUrl);
+                builder.Port = -1;
+                string url = builder.ToString();
+                var response = await _client.PostAsync(url, GetPostJson(postData.JsonData));
 
-                var response = await _client.PostAsync(postData.RequestUrl, GetPostJson(postData.JsonData));
                 responseWrapper.Code = 1;
                 responseWrapper.Data = response.Content.ReadAsStringAsync().Result;
             }
@@ -59,44 +56,46 @@ namespace CorsAnywhere.Services
 
         public async Task<ResponseWrapper> MakeGetAPICall(PostObject postData)
         {
-            return await MakeAPICall(postData, "GET");
-        }
-        public async Task<ResponseWrapper> MakeAPICall(PostObject postData, string method)
-        {
-            /*
-             * url: https://api3.yolearn.vn/yolearner/api/login/,
-                header: {
-                    "content-type": application/json
-                },
-                body: {
-                   username: "0346253997",
-                   password: "12345678"
-                }
-             */
             ResponseWrapper responseWrapper = new ResponseWrapper();
             responseWrapper.Code = -1;
 
             try
             {
-                if (postData.HeadersList != null)
-                {
-                    var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(postData.HeadersList);
+                SetHeader(postData.HeadersList);
+                var builder = new UriBuilder(postData.RequestUrl);
+                builder.Port = -1;
+                var query = HttpUtility.ParseQueryString(builder.Query);
+                if (postData.JsonData != null) {
+                    var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(postData.JsonData);
                     foreach (KeyValuePair<string, string> entry in headers)
                     {
-                        _client.DefaultRequestHeaders.Add(entry.Key, entry.Value);
+                        query[entry.Key] = entry.Value;
                     }
+                    builder.Query = query.ToString();
                 }
-
-                var response = await _client.GetAsync(postData.RequestUrl);
+                string url = builder.ToString();
+                var response = await _client.GetAsync(url);
                 responseWrapper.Code = 1;
                 responseWrapper.Data = response.Content.ReadAsStringAsync().Result;
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
                 responseWrapper.Data = ex.Message;
             }
 
             return responseWrapper;
+        }
+
+        private void SetHeader(string jsonString)
+        {
+            if (jsonString != null && jsonString.Length > 0)
+            {
+                var headers = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonString);
+                foreach (KeyValuePair<string, string> entry in headers)
+                {
+                    _client.DefaultRequestHeaders.Add(entry.Key, entry.Value);
+                }
+            }
         }
     }
 }
