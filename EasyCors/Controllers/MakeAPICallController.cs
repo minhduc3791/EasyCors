@@ -29,17 +29,35 @@ namespace CorsAnywhere.Controllers
         {
             return _makeAPICallService.MakeGetAPICall(postData);
         }*/
-
+        /// <summary>
+        /// Take the request url and params, make the request and return the result of that request or error if occurs.
+        /// </summary>
+        /// <param name="postData"></param>
+        /// <returns></returns>
         [HttpPost]
-        public Task<ResponseWrapper> Post([FromBody] PostObject postData)
+        public async Task<ResponseWrapper> Post([FromBody] PostObject postData)
         {
-            if (postData.Method.Equals("POST"))
+            ResponseWrapper response = new ResponseWrapper();
+            
+            try
             {
-                return _makeAPICallService.MakePostAPICall(postData);
+                if (postData.Method.Equals("POST"))
+                {
+
+                    response = await _makeAPICallService.MakePostAPICall(postData);
+                    return response;
+                }
+                else
+                {
+                    response = await _makeAPICallService.MakeGetAPICall(postData);
+                    return response;
+                }
             }
-            else
+            catch 
             {
-                return _makeAPICallService.MakeGetAPICall(postData);
+                response.Code = -1;
+                response.Data = "Error, Invalid or missing parameter(s).";
+                return response;
             }
         }
     }
