@@ -5,7 +5,7 @@ Features:
   - Support POST/GET configuration
   - Support Header configuration as Dictionary<string, string>
   - Authentication(coming soon)
-  - Swagger(coming soon)
+  - Swagger
 
-Live at https://easycors.azurewebsites.net/
-Documents: coming soon
+Live at: https://easycors.azurewebsites.net/
+Documents: https://easycors.azurewebsites.net/
