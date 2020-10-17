@@ -1,13 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using CorsAnywhere.Interfaces;
 using CorsAnywhere.Services;
+using EasyCors.Data;
+using EasyCors.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,6 +36,15 @@ namespace CorsAnywhere
         {
             services.AddMvc();
             services.AddControllers();
+            services.AddDbContext<IdentityDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("IdentityDbContextConnection")));
+
+            services.AddDefaultIdentity<ECUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddEntityFrameworkStores<IdentityDbContext>();
+
+            services.AddIdentityServer().AddApiAuthorization<ECUser, IdentityDbContext>();
+            services.AddAuthentication().AddIdentityServerJwt();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
@@ -50,6 +65,10 @@ namespace CorsAnywhere
                         Url = new Uri("https://example.com/license"),
                     }*/
                 });
+
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
             services.AddSingleton<IMakeAPICallService, MakeAPICallService>();
 
@@ -83,6 +102,12 @@ namespace CorsAnywhere
 
             app.UseRouting();
 
+            app.UseAuthentication();
+
+            app.UseIdentityServer();
+
+            app.UseAuthorization();
+
             app.UseCors("AllowWebAppAccess");
 
             app.UseAuthorization();
@@ -93,6 +118,8 @@ namespace CorsAnywhere
                     name: "default",
                     pattern: "{controller=MakeAPICall}/{action=Index}");
             });
+
+            
         }
     }
 }

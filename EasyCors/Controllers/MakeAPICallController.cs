@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using CorsAnywhere.Interfaces;
 using CorsAnywhere.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -34,6 +35,7 @@ namespace CorsAnywhere.Controllers
         /// </summary>
         /// <param name="postData"></param>
         /// <returns></returns>
+        //[Authorize]
         [HttpPost]
         public async Task<ResponseWrapper> Post([FromBody] PostObject postData)
         {
